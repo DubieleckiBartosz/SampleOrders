@@ -9,6 +9,6 @@ namespace OrderApi.Interfaces
     public interface IDistributedCache<T>
     {
         Task<IEnumerable<T>> GetAsync(string key);
-        Task SetAsync(string key, T items, int minutesToCache, int slidingExpiration);
+        Task SetAsync(string key, IEnumerable<T> items, int minutesToCache, int slidingExpiration);
     }
 }

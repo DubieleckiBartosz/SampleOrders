@@ -16,15 +16,15 @@ namespace OrderApi.Background
 {
     public class BackgroundCacheClient:BackgroundService
     {
-    private readonly IDistributedCache<IEnumerable<Shop>> _distributedCache;
+    private readonly IDistributedCache<Shop> _distributedCache;
         private readonly IShopClientService _shopClientService;
         private int _refreshCacheInSeconds;
         private readonly RedisSettings _reddiSettings;
         private int _timeRedis;
-        public BackgroundCacheClient(IDistributedCache<IEnumerable<Shop>> distributedCache,
-            IShopClientService shopClientService,IOptions<RedisSettings> options)
+        public BackgroundCacheClient(IDistributedCache<Shop> distributedCache,
+            IShopClientService shopClientService, RedisSettings settings)
         {
-            _reddiSettings = options.Value;
+            _reddiSettings = settings;
             _shopClientService = shopClientService;
             _distributedCache = distributedCache;
             _timeRedis = _reddiSettings.TimeInMinutes;
@@ -34,12 +34,13 @@ namespace OrderApi.Background
         {
             while(!stoppingToken.IsCancellationRequested)
             {
-                var shops = await _shopClientService.GetShopsAsync();
-                if (shops is object)
-                {
-                    await _distributedCache.SetAsync($"{typeof(Shop).Name}_shops", 
-                        shops.Data, _timeRedis, 1);
-                }
+                var shops = await _shopClientService.GetShopsAsync(stoppingToken);
+                    if (shops is object)
+                    {
+                        await _distributedCache.SetAsync($"{typeof(Shop).Name}_shops",
+                            shops.Data, _timeRedis, 1);
+                    }
+                    
                 await Task.Delay(TimeSpan.FromSeconds(_refreshCacheInSeconds), stoppingToken);
             }
         }

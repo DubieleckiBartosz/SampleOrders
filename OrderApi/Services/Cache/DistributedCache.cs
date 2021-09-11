@@ -27,14 +27,14 @@ namespace OrderApi.Services.Cache
             return result.Deserialize<IEnumerable<T>>();
         }
 
-        public async Task SetAsync(string key, T item, int minutesToCache,int slidingExpiration)
+        public async Task SetAsync(string key, IEnumerable<T> items, int minutesToCache,int slidingExpiration)
         {
-            if (item != null)
+            if (items.Any()) 
             {
                 var options = new DistributedCacheEntryOptions()
-                    .SetAbsoluteExpiration(DateTime.Now.AddMinutes(slidingExpiration))
-                    .SetSlidingExpiration(TimeSpan.FromMinutes(1));
-                var bytes = item.Serialize();
+                    .SetAbsoluteExpiration(DateTime.Now.AddMinutes(minutesToCache))
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(slidingExpiration));
+                var bytes = items.Serialize();
                 await _distributedCache.SetAsync(key,bytes, options);
             }
         }
